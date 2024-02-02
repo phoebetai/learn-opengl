@@ -1,7 +1,7 @@
-#include <iostream>
-
 #include <glad/glad.h> // OpenGL function loader
 #include <GLFW/glfw3.h>
+
+#include <iostream>
 
 const char *vertexShaderSource = "#version 460 core\n"
                                  "layout (location = 0) in vec3 pos;\n"
@@ -12,7 +12,7 @@ const char *vertexShaderSource = "#version 460 core\n"
 const char *fragmentShaderSource = "#version 460 core\n"
                                    "out vec4 color;\n"
                                    "void main() {\n"
-                                       "color = vec4(1.0f, 0.5f, 0.2f, 1.0f)\n"
+                                       "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
                                    "}\0";
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -44,18 +44,6 @@ int main() {
     // Set viewport dimensions
     glViewport(0, 0, 800, 600); // In pixels
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Adjust dimensions on window resize
-
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-         0.5f, -0.5f, 0.0f,
-         0.0f,  0.5f, 0.0f
-    };
-
-    // Upload vertex data to GPU
-    unsigned int vertexBufferObject;
-    glGenBuffers(1, &vertexBufferObject);
-    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // One write, many reads
 
     // Compile vertex shader
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER); // Create empty shader object
@@ -96,12 +84,32 @@ int main() {
         std::cout << "Shader linking failed: " << infoLog << std::endl;
     }
 
-    // Activate shader program object
-    glUseProgram(shaderProgram);
-
-    // Shader object no longer needed
+    // Shader objects no longer needed
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
+
+    float vertices[] = {
+    -0.5f, -0.5f, 0.0f,
+     0.5f, -0.5f, 0.0f,
+     0.0f,  0.5f, 0.0f
+    };
+
+    // Bind VAO for storing vertex attribute configurations
+    unsigned int vertexArrayObject;
+    glGenVertexArrays(1, &vertexArrayObject);
+    glBindVertexArray(vertexArrayObject);
+
+    // Copy vertex data to OpenGL buffer
+    unsigned int vertexBufferObject;
+    glGenBuffers(1, &vertexBufferObject);
+    glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // One write, many reads
+
+    // Configure and enable vertex buffer attributes
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+    glEnableVertexAttribArray(0); // Attribute are disabled by default
+
+    // Can unbind VAO and VBO here, but it's not necessary
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -111,9 +119,18 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Draw triangle
+        glUseProgram(shaderProgram); // Activate shader program object
+        glBindVertexArray(vertexArrayObject);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
+
+    glDeleteBuffers(1, &vertexBufferObject);
+    glDeleteVertexArrays(1, &vertexArrayObject);
+    glDeleteProgram(shaderProgram);
 
     glfwTerminate();
     return 0;
