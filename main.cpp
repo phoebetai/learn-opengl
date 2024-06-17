@@ -47,7 +47,7 @@ int main() {
 
     // Compile vertex shader
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER); // Create empty shader object
-    glShaderSource(vertexShader, 1, &vertexShaderSource,NULL);
+    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);   // Attach shader source
     glCompileShader(vertexShader);
 
     // Check for compilation error
@@ -89,27 +89,37 @@ int main() {
     glDeleteShader(fragmentShader);
 
     float vertices[] = {
-    -0.5f, -0.5f, 0.0f,
-     0.5f, -0.5f, 0.0f,
-     0.0f,  0.5f, 0.0f
+         0.5f,  0.5f, 0.0f, // top right
+         0.5f, -0.5f, 0.0f, // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f,  0.5f, 0.0f  // top left
     };
 
-    // Bind VAO for storing vertex attribute configurations
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+
+    // Create and bind vertex array for storing vertex attribute configurations
     unsigned int vertexArrayObject;
     glGenVertexArrays(1, &vertexArrayObject);
     glBindVertexArray(vertexArrayObject);
 
-    // Copy vertex data to OpenGL buffer
+    // Create, bind, and populate vertex buffer
     unsigned int vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW); // One write, many reads
 
+    // Create, bind, and populate element buffer (for storing indices)
+    unsigned int elementBufferObject;
+    glGenBuffers(1, &elementBufferObject);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObject);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
     // Configure and enable vertex buffer attributes
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-    glEnableVertexAttribArray(0); // Attribute are disabled by default
-
-    // Can unbind VAO and VBO here, but it's not necessary
+    glEnableVertexAttribArray(0); // Enable attribute at location 0
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -119,10 +129,11 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        // Draw triangle
+        // Draw rectangle from index buffer
         glUseProgram(shaderProgram); // Activate shader program object
-        glBindVertexArray(vertexArrayObject);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glBindVertexArray(vertexArrayObject); // Load VBO, EBO, and attributes
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+        glBindVertexArray(0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();
