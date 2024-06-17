@@ -5,14 +5,17 @@
 
 const char *vertexShaderSource = "#version 460 core\n"
                                  "layout (location = 0) in vec3 pos;\n"
+                                 "out vec4 vertexColor;\n"
                                  "void main() {\n"
-                                     "gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);\n"
+                                     "gl_Position = vec4(pos, 1.0);\n"
+                                     "vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
                                  "}\0";
 
 const char *fragmentShaderSource = "#version 460 core\n"
-                                   "out vec4 color;\n"
+                                   "out vec4 fragColor;\n"
+                                   "uniform vec4 ourColor;\n"
                                    "void main() {\n"
-                                       "color = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+                                       "fragColor = ourColor;\n"
                                    "}\0";
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
@@ -129,12 +132,21 @@ int main() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // Activate shader program
+        glUseProgram(shaderProgram);
+
+        // Update uniform color
+        float timeValue = glfwGetTime();
+        float greenValue = sin(timeValue) / 2.0f + 0.5f; // Vary from 0 to 1
+        int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+        glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
         // Draw rectangle from index buffer
-        glUseProgram(shaderProgram); // Activate shader program object
         glBindVertexArray(vertexArrayObject); // Load VBO, EBO, and attributes
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
         glBindVertexArray(0);
 
+        // Swap buffers and poll IO events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
