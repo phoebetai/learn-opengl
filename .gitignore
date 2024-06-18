@@ -1,4 +1,4 @@
 *.filters
+*.vs/
 *.user
-*.vs
 x64/
