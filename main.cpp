@@ -1,6 +1,11 @@
 #include <glad/glad.h> // OpenGL function loader
 #include <GLFW/glfw3.h>
 
+// OpenGL Mathematics
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 // Image loading library
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
@@ -128,10 +133,19 @@ int main() {
     }
     stbi_image_free(data);
 
+    // Calculate scale and rotate transform
+    glm::mat4 trans = glm::mat4(1.0f);
+    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
+    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
+
     // Activate shader program
     ourShader.use();
     ourShader.setInt("texture1", 0); // Associate sampler with texture unit
     ourShader.setInt("texture2", 1);
+
+    // Pass transform to shader
+    unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
