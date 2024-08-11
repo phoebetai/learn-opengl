@@ -133,19 +133,10 @@ int main() {
     }
     stbi_image_free(data);
 
-    // Calculate scale and rotate transform
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::rotate(trans, glm::radians(90.0f), glm::vec3(0.0, 0.0, 1.0));
-    trans = glm::scale(trans, glm::vec3(0.5, 0.5, 0.5));
-
     // Activate shader program
     ourShader.use();
     ourShader.setInt("texture1", 0); // Associate sampler with texture unit
     ourShader.setInt("texture2", 1);
-
-    // Pass transform to shader
-    unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -161,6 +152,15 @@ int main() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, texture2);
 
+        // Calculate transform
+        glm::mat4 transform = glm::mat4(1.0f);
+        transform = glm::translate(transform, glm::vec3(0.5f, -0.5f, 0.0f));
+        transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0, 0.0, 1.0));
+
+        // Pass transform to shader
+        unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
         // Draw rectangle from index buffer
         glBindVertexArray(vertexArrayObject);  // Load VBO, EBO, and attributes
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -172,6 +172,7 @@ int main() {
     }
 
     glDeleteBuffers(1, &vertexBufferObject);
+    glDeleteBuffers(1, &elementBufferObject);
     glDeleteVertexArrays(1, &vertexArrayObject);
     //glDeleteProgram(shaderProgram);
 
