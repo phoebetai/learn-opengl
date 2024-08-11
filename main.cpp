@@ -33,6 +33,7 @@ int main() {
         return -1;
     }
     glfwMakeContextCurrent(window); // Make this the main context on current thread
+    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Adjust dimensions on window resize
 
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -40,9 +41,8 @@ int main() {
         return -1;
     }
 
-    // Set viewport dimensions
-    glViewport(0, 0, 800, 600); // In pixels
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Adjust dimensions on window resize
+    // Enable depth testing
+    glEnable(GL_DEPTH_TEST);
 
     // Build and compile shader program
     Shader ourShader("shader.vs", "shader.fs");
@@ -164,9 +164,9 @@ int main() {
     while (!glfwWindowShouldClose(window)) {
         processInput(window);
 
-        // Clear color buffer
+        // Clear color and depth buffers
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // Bind textures
         glActiveTexture(GL_TEXTURE0);
