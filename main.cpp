@@ -188,8 +188,12 @@ int main() {
         glBindTexture(GL_TEXTURE_2D, texture2);
 
         // Create transform matrices
-        glm::mat4 view = glm::mat4(1.0f);
-        view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        const float radius = 10.0f;
+        float camX = sin(glfwGetTime()) * radius;
+        float camZ = cos(glfwGetTime()) * radius;
+        glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0, camZ), // Camera pos
+                                     glm::vec3(0.0, 0.0, 0.0),   // Target pos
+                                     glm::vec3(0.0, 1.0, 0.0));  // Up vec
 
         glm::mat4 projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 100.0f);
 
