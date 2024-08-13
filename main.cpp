@@ -22,6 +22,11 @@ glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f,  3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
 glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 
+// These ensure velocity is the same regardless of system's FPS.
+// Also compensate for slower or faster frames.
+float deltaTime = 0.0f; // Time between current frame and last frame
+float lastFrame = 0.0f; // Time of last frame
+
 int main() {
     glfwInit();
 
@@ -180,6 +185,12 @@ int main() {
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
+        // Update times
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        // Input
         processInput(window);
 
         // Clear color and depth buffers
@@ -247,7 +258,7 @@ void processInput(GLFWwindow *window) {
     }
 
     // Camera controls
-    const float cameraSpeed = 0.05f;
+    const float cameraSpeed = 2.5f * deltaTime;
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         cameraPos += cameraSpeed * cameraFront;
     }
