@@ -15,6 +15,7 @@
 #include <iostream>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void mouse_callback(GLFWwindow *window, double xPos, double yPos);
 void processInput(GLFWwindow *window);
 
 // Camera set-up
@@ -26,6 +27,13 @@ glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f,  0.0f);
 // Also compensate for slower or faster frames.
 float deltaTime = 0.0f; // Time between current frame and last frame
 float lastFrame = 0.0f; // Time of last frame
+
+float pitch = 0.0f;
+float yaw = -90.0f;
+
+// Mouse position
+float lastX = 400, lastY = 300; // Screen center
+bool firstMouse = true; // First time mouse enters window
 
 int main() {
     glfwInit();
@@ -44,6 +52,10 @@ int main() {
     }
     glfwMakeContextCurrent(window); // Make this the main context on current thread
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); // Adjust dimensions on window resize
+
+    // Capture mouse movement
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     // Initialize GLAD
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -249,6 +261,45 @@ int main() {
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
     glViewport(0, 0, width, height);
+}
+
+void mouse_callback(GLFWwindow *window, double xPos, double yPos) {
+    // Avoid jump upon entering window
+    if (firstMouse) {
+        lastX = xPos;
+        lastY = yPos;
+        firstMouse = false;
+    }
+
+    // Update mouse position
+    float xOffset = xPos - lastX;
+    float yOffset = lastY - yPos; // Reverse since y-coordinates range from bottom to top
+    lastX = xPos;
+    lastY = yPos;
+
+    // Scale back by sensitivity
+    const float sensitivity = 0.1f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    // Update pitch and yaw
+    yaw   += xOffset;
+    pitch += yOffset;
+
+    // Clamp pitch so camera doesn't flip
+    if (pitch > 89.0f) {
+        pitch = 89.0f;
+    }
+    if (pitch < -89.0f) {
+        pitch = -89.0f;
+    }
+
+    // Calculate direction vector
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    cameraFront = glm::normalize(direction);
 }
 
 void processInput(GLFWwindow *window) {
