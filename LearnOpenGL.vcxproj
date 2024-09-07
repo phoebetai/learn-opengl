@@ -528,8 +528,10 @@
     <None Include="include\glm\gtx\vector_angle.inl" />
     <None Include="include\glm\gtx\vector_query.inl" />
     <None Include="include\glm\gtx\wrap.inl" />
-    <None Include="shader.fs" />
-    <None Include="shader.vs" />
+    <None Include="lightCubeShader.fs" />
+    <None Include="lightCubeShader.vs" />
+    <None Include="lightingShader.fs" />
+    <None Include="lightingShader.vs" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="awesomeface.png" />

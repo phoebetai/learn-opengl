@@ -7,7 +7,6 @@
 // OpenGL Mathematics
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 
 // Image loading library
 #define STB_IMAGE_IMPLEMENTATION
@@ -26,6 +25,9 @@ const unsigned int SCREEN_HEIGHT = 600;
 
 // Camera
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+
+// World space light position
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
 
 // These ensure velocity is the same regardless of system's FPS.
 // Also compensate for slower or faster frames.
@@ -68,8 +70,9 @@ int main() {
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
 
-    // Build and compile shader program
-    Shader ourShader("shader.vs", "shader.fs");
+    // Build and compile shader programs
+    Shader lightingShader("lightingShader.vs", "lightingShader.fs");
+    Shader lightCubeShader("lightCubeShader.vs", "lightCubeShader.fs");
 
     // Position and texcoords
     float vertices[] = {
@@ -116,21 +119,7 @@ int main() {
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
-    // World space cube positions
-    glm::vec3 cubePositions[] = {
-    glm::vec3( 0.0f,  0.0f,  0.0f),
-    glm::vec3( 2.0f,  5.0f, -15.0f),
-    glm::vec3(-1.5f, -2.2f, -2.5f),
-    glm::vec3(-3.8f, -2.0f, -12.3f),
-    glm::vec3( 2.4f, -0.4f, -3.5f),
-    glm::vec3(-1.7f,  3.0f, -7.5f),
-    glm::vec3( 1.3f, -2.0f, -2.5f),
-    glm::vec3( 1.5f,  2.0f, -2.5f),
-    glm::vec3( 1.5f,  0.2f, -1.5f),
-    glm::vec3(-1.3f,  1.0f, -1.5f)
-    };
-
-    // Create, bind, and populate vertex buffer
+    // Create and bind vertex buffer
     unsigned int vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
@@ -145,58 +134,14 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0); // Enable attribute at location 0
 
-    // Configure and enable texture coord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1); // Enable attribute at location 1
+    // Create and bind light-specific vertex array
+    unsigned int lightVertexArrayObject;
+    glGenVertexArrays(1, &lightVertexArrayObject);
+    glBindVertexArray(lightVertexArrayObject);
 
-    // Create and bind texture
-    unsigned int texture1;
-    glGenTextures(1, &texture1);
-    glBindTexture(GL_TEXTURE_2D, texture1);
-
-    // Set wrap and filter options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Magnification doesn't use mipmaps
-
-    // Load and generate container texture
-    int width, height, numChannels;
-    unsigned char *data = stbi_load("container.jpg", &width, &height, &numChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // Create and bind texture
-    unsigned int texture2;
-    glGenTextures(1, &texture2);
-    glBindTexture(GL_TEXTURE_2D, texture2);
-
-    // Set wrap and filter options
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); // Magnification doesn't use mipmaps
-
-    // Load and generate emoji texture
-    stbi_set_flip_vertically_on_load(true);
-    data = stbi_load("awesomeface.png", &width, &height, &numChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-    } else {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
-
-    // Bind textures
-    ourShader.use();
-    ourShader.setInt("texture1", 0); // Associate sampler with texture unit
-    ourShader.setInt("texture2", 1);
+    // Configure light position attribute
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -209,47 +154,43 @@ int main() {
         processInput(window);
 
         // Clear color and depth buffers
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Bind textures
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, texture1);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, texture2);
-
-        //  Activate shader
-        ourShader.use();
+        //  Activate lighting shader
+        lightingShader.use();
+        lightingShader.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 
         // Pass projection transform to shader
         glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
-        int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
+        lightingShader.setMat4("projection", projection);
         
         // Pass view transform to shader
         glm::mat4 view = camera.getViewMatrix();
-        int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-        glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+        lightingShader.setMat4("view", view);
 
-        // Bind vertices
+        // Pass model transform to shader
+        glm::mat4 model = glm::mat4(1.0f);
+        lightingShader.setMat4("model", model);
+
+        // Draw cube
         glBindVertexArray(vertexArrayObject);  // Load VBO and attributes
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // Draw ten cubes
-        for (unsigned int i = 0; i < 10; i++) {
-            // Create model transform for each cube
-            glm::mat4 model = glm::mat4(1.0f);
-            model = glm::translate(model, cubePositions[i]);
-            float angle = 20.0f * i;
-            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+        // Activate light source shader
+        lightCubeShader.use();
 
-            // Pass model transform to shader
-            int modelLoc = glGetUniformLocation(ourShader.ID, "model");
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+        lightCubeShader.setMat4("projection", projection);
+        lightCubeShader.setMat4("view", view);
 
-            glDrawArrays(GL_TRIANGLES, 0, 36);
-        }
+        model = glm::translate(model, lightPos);
+        model = glm::scale(model, glm::vec3(0.2f));
+        lightCubeShader.setMat4("model", model);
 
-        glBindVertexArray(0); // Not necessary?
+        // Draw light
+        glBindVertexArray(lightVertexArrayObject);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Swap buffers and poll I/O events
         glfwSwapBuffers(window);
@@ -258,7 +199,7 @@ int main() {
 
     glDeleteBuffers(1, &vertexBufferObject);
     glDeleteVertexArrays(1, &vertexArrayObject);
-    //glDeleteProgram(shaderProgram);
+    glDeleteVertexArrays(1, &lightVertexArrayObject);
 
     glfwTerminate();
     return 0;
