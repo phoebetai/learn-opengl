@@ -40,10 +40,6 @@ class Shader {
 			// Close files
 			vShaderFile.close();
 			fShaderFile.close();
-
-			//// Convert stream to string
-			//vertexCode = vShaderStream.str();
-			//fragmentCode = fShaderStream.str();
 		}
 		catch (std::ifstream::failure e) {
 			std::cout << "Error reading shader file" << std::endl;
