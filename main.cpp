@@ -166,6 +166,7 @@ int main() {
         lightingShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
         lightingShader.setVec3("lightColor",  1.0f, 1.0f, 1.0f);
         lightingShader.setVec3("lightPos", lightPos);
+        lightingShader.setVec3("viewPos", camera.position);
 
         // Pass projection transform to shader
         glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT, 0.1f, 100.0f);
