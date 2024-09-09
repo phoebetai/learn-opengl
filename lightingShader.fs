@@ -9,8 +9,7 @@ struct Light {
 };
 
 struct Material {
-	vec3 ambient;
-	vec3 diffuse;
+	sampler2D diffuse; // This is an opaque data type (i.e. a handle)
 	vec3 specular;
 	float shininess;
 };
@@ -19,6 +18,7 @@ out vec4 fragColor;
 
 in vec3 fragPos;
 in vec3 normal;
+in vec2 texCoords;
 
 uniform Light light;
 uniform Material material;
@@ -26,14 +26,14 @@ uniform vec3 viewPos;
 
 void main() {
 	// Ambient light
-	vec3 ambient = light.ambient * material.ambient;
+	vec3 ambient = light.ambient * vec3(texture(material.diffuse, texCoords));
 
 	vec3 norm = normalize(normal);
 	vec3 lightDir = normalize(light.position - fragPos);
 
 	// Diffuse light
 	float diff = max(dot(norm, lightDir), 0.0); // Clamp to maximum of 90 degrees between two vectors
-	vec3 diffuse = light.diffuse * (diff * material.diffuse);
+	vec3 diffuse = light.diffuse * (diff * vec3(texture(material.diffuse, texCoords)));
 
 	vec3 viewDir = normalize(viewPos - fragPos);
 	vec3 reflectDir = reflect(-lightDir, norm); // Reflected light vector
