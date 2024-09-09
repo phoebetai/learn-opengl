@@ -153,8 +153,9 @@ int main() {
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
 
-    // Create and bind texture
-    unsigned int diffuseMap = loadTexture("textures/container2.png");
+    // Create textures
+    unsigned int diffuseMap  = loadTexture("textures/container2.png");
+    unsigned int specularMap = loadTexture("textures/container2_specular.png");
 
     // Render loop
     while (!glfwWindowShouldClose(window)) {
@@ -187,8 +188,8 @@ int main() {
         lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 
         // Set material parameters
-        lightingShader.setInt("material.diffuse", 0); // Assign texture
-        lightingShader.setVec3("material.specular", 0.5f, 0.5f, 0.5f);
+        lightingShader.setInt("material.diffuse", 0);
+        lightingShader.setInt("material.specular", 1);
         lightingShader.setFloat("material.shininess", 32.0f);
 
         // Set camera position
@@ -206,9 +207,11 @@ int main() {
         glm::mat4 model = glm::mat4(1.0f);
         lightingShader.setMat4("model", model);
 
-        // Bind texture
+        // Bind textures
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, diffuseMap);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, specularMap);
 
         // Draw cube
         glBindVertexArray(vertexArrayObject);  // Load VBO and attributes

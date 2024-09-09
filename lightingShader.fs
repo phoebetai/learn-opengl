@@ -10,7 +10,7 @@ struct Light {
 
 struct Material {
 	sampler2D diffuse; // This is an opaque data type (i.e. a handle)
-	vec3 specular;
+	sampler2D specular;
 	float shininess;
 };
 
@@ -40,7 +40,7 @@ void main() {
 
 	// Specular light
 	float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess); // The smaller the angle between view and reflection, the stronger the specular light
-	vec3 specular = light.specular * (spec * material.specular);
+	vec3 specular = light.specular * (spec * vec3(texture(material.specular, texCoords)));
 
 	vec3 result = ambient + diffuse + specular;
 	fragColor = vec4(result, 1.0);
