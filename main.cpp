@@ -196,11 +196,12 @@ int main() {
         glm::vec3 ambientColor = diffuseColor * glm::vec3(0.2f);
 
         // Set light parameters
-        lightingShader.setVec3("light.position", lightPos);
-        //lightingShader.setVec3("light.direction", -0.2f, -1.0f, -0.3f); // Pointing down
-        lightingShader.setVec3("light.ambient",  ambientColor);
-        lightingShader.setVec3("light.diffuse",  diffuseColor);
-        lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+        lightingShader.setVec3("light.position",   camera.position);
+        lightingShader.setVec3("light.direction",  camera.front);
+        lightingShader.setFloat("light.cutoff",    glm::cos(glm::radians(12.5f)));
+        lightingShader.setVec3("light.ambient",    ambientColor);
+        lightingShader.setVec3("light.diffuse",    diffuseColor);
+        lightingShader.setVec3("light.specular",   1.0f, 1.0f, 1.0f);
         lightingShader.setFloat("light.constant",  1.0f);
         lightingShader.setFloat("light.linear",    0.09f);
         lightingShader.setFloat("light.quadratic", 0.032f);
