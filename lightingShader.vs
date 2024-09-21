@@ -16,6 +16,6 @@ void main() {
     gl_Position = projection * view * model * vec4(aPos, 1.0f);
 
     fragPos = vec3(model * vec4(aPos, 1.0)); // World space fragment position
-    normal = aNormal;
+    normal = mat3(transpose(inverse(model))) * aNormal; // World space normal (multiply by "normal matrix")
     texCoords = aTexCoords;
 }
