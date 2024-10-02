@@ -54,9 +54,9 @@ class Mesh {
 				glBindTexture(GL_TEXTURE_2D, textures[i].id);
 
 				// Set as shader param
-				shader.setInt(("material." + name + number).c_str(), i);
+				shader.setInt(("" + name + number).c_str(), i);
 			}
-
+			// Reset to default
 			glActiveTexture(GL_TEXTURE0);
 			
 			// Draw mesh
@@ -69,34 +69,38 @@ class Mesh {
 		unsigned int vertexArrayObj, vertexBufferObj, elementBufferObj;
 
 		void setupMesh() {
-			// Create and init vertex buffer
+			// Create objects
+			glGenVertexArrays(1, &vertexArrayObj);
 			glGenBuffers(1, &vertexBufferObj);
+			glGenBuffers(1, &elementBufferObj);
+
+			// Bind first to store state
+			glBindVertexArray(vertexArrayObj);
+
+			// Initialize vertex buffer
 			glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObj);
 			glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
 		
-			// Create and init index buffer
-			glGenBuffers(1, &elementBufferObj);
+			// Initialize index buffer
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBufferObj);
 			glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
 
 			// Configure vertex attributes
 			{
-				glGenVertexArrays(1, &vertexArrayObj);
-				glBindVertexArray(vertexArrayObj);
-
 				// Postion
-				glEnableVertexAttribArray(0);
 				glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)0);
+				glEnableVertexAttribArray(0);
 
 				// Normal
-				glEnableVertexAttribArray(1);
 				glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, normal));
+				glEnableVertexAttribArray(1);
 
 				// Texcoords
-				glEnableVertexAttribArray(2);
 				glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void *)offsetof(Vertex, texCoords));
-
-				glBindVertexArray(0);
+				glEnableVertexAttribArray(2);
 			}
+
+			// Unbind
+			glBindVertexArray(0);
 		}
 };

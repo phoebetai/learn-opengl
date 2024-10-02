@@ -8,6 +8,7 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 
+// Image loading library
 #include "stb_image.h"
 
 #include <string>
@@ -15,9 +16,11 @@
 
 using namespace std;
 
+unsigned int textureFromFile(const char *path, const string &directory);
+
 class Model {
 	public:
-		Model(char *path) {
+		Model(const char *path) {
 			loadModel(path);
 		}
 
@@ -154,41 +157,41 @@ class Model {
 
 			return textures;
 		}
-
-		unsigned int textureFromFile(const char *path, const string &directory, bool gamma) {
-			string filename = directory + '/' + string(path);
-
-			// Create texture
-			unsigned int textureID;
-			glGenTextures(1, &textureID);
-
-			// Load texture and generate mipmaps
-			int width, height, numComponents;
-			unsigned char *data = stbi_load(filename.c_str(), &width, &height, &numComponents, 0);
-			if (data) {
-				GLenum format;
-				if (numComponents == 1) {
-					format = GL_RED;
-				} else if (numComponents == 3) {
-					format = GL_RGB;
-				} else if (numComponents == 4) {
-					format = GL_RGBA;
-				}
-
-				glBindTexture(GL_TEXTURE_2D, textureID);
-				glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-				glGenerateMipmap(GL_TEXTURE_2D);
-
-				// Set wrap and filter options
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  // Magnification doesn't use mipmaps
-			} else {
-				cout << "Texture failed to load at path: " << path << endl;
-			}
-			stbi_image_free(data);
-
-			return textureID;
-		}
 };
+
+unsigned int textureFromFile(const char *path, const string &directory) {
+	string filename = directory + '/' + string(path);
+
+	// Create texture
+	unsigned int textureID;
+	glGenTextures(1, &textureID);
+
+	// Load texture and generate mipmaps
+	int width, height, numComponents;
+	unsigned char *data = stbi_load(filename.c_str(), &width, &height, &numComponents, 0);
+	if (data) {
+		GLenum format;
+		if (numComponents == 1) {
+			format = GL_RED;
+		} else if (numComponents == 3) {
+			format = GL_RGB;
+		} else if (numComponents == 4) {
+			format = GL_RGBA;
+		}
+
+		glBindTexture(GL_TEXTURE_2D, textureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glGenerateMipmap(GL_TEXTURE_2D);
+
+		// Set wrap and filter options
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);  // Magnification doesn't use mipmaps
+	} else {
+		cout << "Texture failed to load at path: " << filename << endl;
+	}
+	stbi_image_free(data);
+
+	return textureID;
+}
